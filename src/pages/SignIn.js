@@ -2,9 +2,8 @@ import { useRef, useState } from 'react';
 import { Form, Card, Button, Alert } from 'react-bootstrap';
 // import { useAuth } from '../contexts/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { auth, provider, db } from '../utils/firebase';
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
-import { doc, serverTimestamp, setDoc, docRef, getDoc } from 'firebase/firestore';
+import { auth } from '../utils/firebase';
+import { signInWithEmailAndPassword } from "firebase/auth";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import GoogleAuth from '../components/GoogleAuth';
@@ -30,34 +29,6 @@ export default function SignIn() {
             setError(true);
             setIsLoading(false);
             toast.error('Check your credentials');
-        }
-    }
-
-    async function onSignInWithGoogle(e) {
-        e.preventDefault();
-
-        try {
-            const result = await signInWithPopup(auth, provider);
-            // const credential = GoogleAuthProvider.credentialFromResult(result);
-            // const token = credential.accessToken;
-            const user = result.user;
-            const referenceToDatabase = doc(db, 'users', user.uid);
-            const isUserInDatabase = await getDoc(referenceToDatabase);
-            if (isUserInDatabase.exists()) {
-                navigate('/');
-            }
-
-            if (!isUserInDatabase.exists()) toast.warning('It looks like you need to register first');
-        } catch (error) {
-            toast.error('An error occurred when trying to sing in with Google');
-            // Handle Errors here.
-            const errorCode = error.code;
-            const errorMessage = error.message;
-            // The email of the user's account used.
-            const email = error.customData.email;
-            // The AuthCredential type that was used.
-            const credential = GoogleAuthProvider.credentialFromError(error);
-            // ...
         }
     }
 

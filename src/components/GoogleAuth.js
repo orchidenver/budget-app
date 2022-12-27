@@ -17,7 +17,7 @@ export default function GoogleAuth() {
         e.preventDefault();
 
         setIsLoading(true);
-        console.log(location);
+
         try {
             const result = await signInWithPopup(auth, provider);
             // const credential = GoogleAuthProvider.credentialFromResult(result);
@@ -26,20 +26,32 @@ export default function GoogleAuth() {
             const referenceToDatabase = doc(db, 'users', user.uid);
             const isUserInDatabase = await getDoc(referenceToDatabase);
 
-            if (isUserInDatabase.exists()) {
-                navigate('/');
+            if (isUserInDatabase.exists() && location.pathname === '/login') {
+                console.log('have acc');
+                toast.warning('It looks like you already have an account');
+                return navigate('/signin');
             }
 
             if (!isUserInDatabase.exists() && location.pathname === '/login') {
+                console.log('reg acc');
                 await setDoc(doc(db, 'users', user.uid), {
                     name: user.displayName,
                     email: user.email,
                     timestamp: serverTimestamp()
                 });
-                navigate('/');
+                return navigate('/');
             }
 
-            if (!isUserInDatabase.exists()) toast.warning('It looks like you need to register first');
+            if (!isUserInDatabase.exists() && location.pathname === '/signin') {
+                console.log('need acc');
+                toast.warning('It looks like you need to register first');
+                return navigate('/login');
+            }
+
+            if (isUserInDatabase.exists()) {
+                console.log('continue');
+                return navigate('/');
+            }
 
             setError('');
             setIsLoading(false);

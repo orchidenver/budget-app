@@ -2,9 +2,9 @@ import { useRef, useState } from 'react';
 import { Form, Card, Button, Alert } from 'react-bootstrap';
 // import { useAuth } from '../contexts/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { auth, provider, db } from '../utils/firebase';
-import { signInWithPopup, GoogleAuthProvider, createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { doc, serverTimestamp, setDoc, docRef, getDoc } from 'firebase/firestore';
+import { auth, db } from '../utils/firebase';
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import GoogleAuth from '../components/GoogleAuth';
@@ -48,39 +48,6 @@ export default function LogIn() {
             setError(true);
             setIsLoading(false);
             toast.error('Please fill all the required fields');
-        }
-    }
-
-    async function onSignInWithGoogle(e) {
-        e.preventDefault();
-
-        try {
-            const result = await signInWithPopup(auth, provider);
-            // const credential = GoogleAuthProvider.credentialFromResult(result);
-            // const token = credential.accessToken;
-            const user = result.user;
-            const referenceToDatabase = doc(db, 'users', user.uid);
-            const isUserInDatabase = await getDoc(referenceToDatabase);
-            if (!isUserInDatabase.exists()) {
-                await setDoc(doc(db, 'users', user.uid), {
-                    name: user.displayName,
-                    email: user.email,
-                    timestamp: serverTimestamp()
-                });
-                navigate('/');
-            }
-
-            if (isUserInDatabase.exists()) toast.warning('It looks like you already have an account');
-        } catch (error) {
-            toast.error('An error occurred when trying to sing up with Google');
-            // Handle Errors here.
-            const errorCode = error.code;
-            const errorMessage = error.message;
-            // The email of the user's account used.
-            const email = error.customData.email;
-            // The AuthCredential type that was used.
-            const credential = GoogleAuthProvider.credentialFromError(error);
-            // ...
         }
     }
 
