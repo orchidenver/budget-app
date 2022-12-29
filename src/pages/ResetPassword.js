@@ -1,44 +1,29 @@
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import { Form, Card, Button, Alert } from 'react-bootstrap';
-// import { useAuth } from '../contexts/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
-import { auth } from '../utils/firebase';
-import { sendPasswordResetEmail } from "firebase/auth";
-import { ToastContainer, toast } from 'react-toastify';
+import { Link } from 'react-router-dom';
 import 'react-toastify/dist/ReactToastify.css';
+import { ToastContainer } from 'react-toastify';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function ResetPassword() {
-    const navigate = useNavigate();
     const emailRef = useRef();
-    const passwordRef = useRef();
-    const nameRef = useRef();
-    // const { logIn, currentUser } = useAuth();
-    const [error, setError] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
+    const { resetPassword, error, isLoading, currentUser } = useAuth();
 
-    async function onSubmitHandler(e) {
+    function onSubmitHandler(e) {
         e.preventDefault();
 
-        try {
-            const reset = await sendPasswordResetEmail(auth, emailRef.current.value);
-            toast.success('Request was sent. Check your email');
-            navigate('/signin');
-        } catch (error) {
-            toast.error('Your email address was not found');
-            navigate('/login');
-        }
+        resetPassword(emailRef.current.value);
     }
 
     return (
-        <div className='min-vh-100 min-vw-100 d-flex justify-content-center align-items-center flex-column'>
+        <div className='max-vh-100 min-vw-95 d-flex justify-content-center align-items-center flex-column mt-5'>
             <Card style={{ width: '20rem' }}>
                 <Card.Body>
                     <h2 className='text-center mb-4'>Reset password</h2>
-                    {error && <Alert variant='danger'>{'Please fill all the required fields'}</Alert>}
                     <Form onSubmit={onSubmitHandler}>
                         <Form.Group id='email'>
                             <Form.Label>Email</Form.Label>
-                            <Form.Control type='email' ref={emailRef} required />
+                            <Form.Control type='email' defaultValue={currentUser?.email} ref={emailRef} required />
                         </Form.Group>
                         <Button className='w-100 mt-4' type='submit' disabled={isLoading}>Reset</Button>
                     </Form>
