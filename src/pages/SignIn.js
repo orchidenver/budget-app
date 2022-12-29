@@ -1,39 +1,25 @@
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import { Form, Card, Button, Alert } from 'react-bootstrap';
-// import { useAuth } from '../contexts/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
-import { auth } from '../utils/firebase';
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { ToastContainer, toast } from 'react-toastify';
+import { Link } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import GoogleAuth from '../components/GoogleAuth';
+import { useAuth } from '../contexts/AuthContext';
+
 
 export default function SignIn() {
-    const navigate = useNavigate();
     const emailRef = useRef();
     const passwordRef = useRef();
-    const [error, setError] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
+    const { signIn, error, isLoading } = useAuth();
 
-    async function onSubmitHandler(e) {
+    function onSubmitHandler(e) {
         e.preventDefault();
 
-        setIsLoading(true);
-        try {
-            const userCredentials = await signInWithEmailAndPassword(auth, emailRef.current.value, passwordRef.current.value);
-            if (userCredentials.user) navigate('/');
-
-            setError('');
-            setIsLoading(false);
-        } catch (error) {
-            setError(true);
-            setIsLoading(false);
-            toast.error('Check your credentials');
-        }
+        signIn(emailRef.current.value, passwordRef.current.value);
     }
 
     return (
-        <div className='min-vh-100 min-vw-100 d-flex justify-content-center align-items-center flex-column'>
+        <div className='max-vh-100 min-vw-95 d-flex justify-content-center align-items-center flex-column mt-5'>
             <Card style={{ width: '20rem' }}>
                 <Card.Body>
                     <h2 className='text-center mb-4'>Sign In</h2>

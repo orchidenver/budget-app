@@ -1,19 +1,19 @@
 import { createContext, useContext, useState } from "react";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendPasswordResetEmail, updateEmail, updatePassword } from "firebase/auth";
-
+import { useNavigate, useLocation } from 'react-router-dom';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendPasswordResetEmail, updateProfile, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import { auth, db, provider } from '../utils/firebase';
+import { doc, serverTimestamp, setDoc, getDoc } from 'firebase/firestore';
+import { toast } from 'react-toastify';
 
 const initialContext = {
     currentUser: null,
-    id: null,
-    token: null,
-    name: null,
-    email: null,
-    signUp: () => { },
-    logIn: () => { },
+    error: null,
+    loading: false,
+    signIn: (email, password) => { },
+    logIn: (email, password, name) => { },
     logOut: () => { },
-    resetPassword: () => { },
-    updateUserEmail: () => { },
-    updateUserPassword: () => { },
+    resetPassword: (email) => { },
+    signInWithGoogle: () => { }
 }
 
 const AuthContext = createContext(initialContext);
@@ -24,78 +24,177 @@ export function useAuth() {
 
 export function AuthProvider({ children }) {
     const [currentUser, setCurrentUser] = useState(null);
+    const [isError, setIsError] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const navigate = useNavigate();
+    const location = useLocation();
 
     const value = {
         currentUser,
-        signUp,
+        error: isError,
+        isLoading: isLoading,
+        signIn,
         logIn,
         logOut,
         resetPassword,
-        updateUserEmail,
-        updateUserPassword
+        signInWithGoogle
     };
 
-    function signUp(email, password) {
-        const auth = getAuth();
+    async function signInWithGoogle() {
 
-        createUserWithEmailAndPassword(auth, email, password)
-            .then(({ user }) => {
-                console.log(user);
+        setIsLoading(true);
+
+        try {
+            const result = await signInWithPopup(auth, provider);
+            // const credential = GoogleAuthProvider.credentialFromResult(result);
+            // const token = credential.accessToken;
+            const user = result.user;
+            const referenceToDatabase = doc(db, 'users', user.uid);
+            const isUserInDatabase = await getDoc(referenceToDatabase);
+
+            if (isUserInDatabase.exists() && location.pathname === '/login') {
+                console.log('have acc');
+                toast.warning('It looks like you already have an account');
+                return navigate('/signin');
+            }
+
+            if (!isUserInDatabase.exists() && location.pathname === '/login') {
+                console.log('reg acc');
+                await setDoc(doc(db, 'users', user.uid), {
+                    name: user.displayName,
+                    email: user.email,
+                    timestamp: serverTimestamp()
+                });
+
                 setCurrentUser(user);
-            })
-            .catch(console.error);
+                return navigate('/');
+            }
+
+            if (!isUserInDatabase.exists() && location.pathname === '/signin') {
+                console.log('need acc');
+                toast.warning('It looks like you need to register first');
+                return navigate('/login');
+            }
+
+            if (isUserInDatabase.exists()) {
+                setCurrentUser(user);
+                console.log('continue');
+                return navigate('/');
+            }
+
+            setIsError('');
+            setIsLoading(false);
+        } catch (error) {
+            setIsError(true);
+            setIsLoading(false);
+            toast.error('An error occurred when trying to sing in with Google');
+            // Handle Errors here.
+            const errorCode = error.code;
+            const errorMessage = error.message;
+            // The email of the user's account used.
+            const email = error.customData.email;
+            // The AuthCredential type that was used.
+            const credential = GoogleAuthProvider.credentialFromError(error);
+            // ...
+        }
     }
 
-    function logIn(email, password) {
-        const auth = getAuth();
-        signInWithEmailAndPassword(auth, email, password)
-            .then(({ user }) => {
-                console.log(user);
-                setCurrentUser(user);
-            })
-            .catch(() => alert('Invalid user!'))
+    async function logIn(email, password, name) {
+        setIsLoading(true);
+
+        try {
+            if (!name) {
+                setIsError(true);
+                setIsLoading(false);
+                return toast.error('Please fill all the required fields');
+            }
+
+            const userCredentials = await createUserWithEmailAndPassword(auth, email, password);
+            updateProfile(auth.currentUser, {
+                displayName: name
+            });
+            const user = userCredentials.user;
+
+            if (!user) throw new Error('Something went wrong on the server side');
+
+            await setDoc(doc(db, 'users', user.uid), {
+                email: email,
+                name: name,
+                timestamp: serverTimestamp()
+            });
+
+            setIsError(null);
+            setIsLoading(false);
+            navigate('/signin');
+        } catch (error) {
+            setIsError(true);
+            setIsLoading(false);
+            toast.error('Please fill all the required fields');
+        }
     }
 
-    function logOut() {
-        const auth = getAuth();
+    async function signIn(email, password) {
+        setIsLoading(true);
+
+        try {
+            const userCredentials = await signInWithEmailAndPassword(auth, email, password);
+            if (!userCredentials.user) {
+                toast.error('Register first');
+                return navigate('/');
+            }
+
+            navigate('/');
+            setCurrentUser(userCredentials.user);
+            setIsError(null);
+            setIsLoading(false);
+        } catch (error) {
+            setIsError(true);
+            setIsLoading(false);
+            toast.error('Check your credentials');
+        }
+    }
+
+    async function logOut() {
         signOut(auth).then(() => {
             setCurrentUser(null);
         }).catch(console.error);
     }
 
-    function resetPassword(email) {
-        const auth = getAuth();
+    async function resetPassword(email) {
+        setIsLoading(true);
+
         sendPasswordResetEmail(auth, email)
-            .then((data) => {
-                console.log(data);
+            .then(() => {
+                toast.success('Request was sent. Check your email');
+                setCurrentUser(null);
+                navigate('/signin');
+
+                setIsError(null);
+                setIsLoading(false);
             })
-            .catch((error) => {
-                const errorCode = error.code;
-                const errorMessage = error.message;
-                alert(errorCode, errorMessage);
+            .catch(() => {
+                setIsError(true);
+                setIsLoading(false);
+
+                toast.error('Your email address was not found');
+                navigate('/login');
             });
-    }
 
-    function updateUserEmail(email) {
-        const auth = getAuth();
-        updateEmail(auth.currentUser, email).then((data) => {
-            console.log(data);
-        }).catch((error) => {
-            // An error occurred
-            // ...
-        });
+        // try {
+        //     const reset = await sendPasswordResetEmail(auth, email);
+        //     toast.success('Request was sent. Check your email');
+        //     setCurrentUser(null);
+        //     navigate('/signin');
 
-    }
+        //     setIsError(null);
+        //     setIsLoading(false);
+        // } catch (error) {
+        //     setIsError(true);
+        //     setIsLoading(false);
 
-    function updateUserPassword(password) {
-        const auth = getAuth();
-
-        updatePassword(auth.currentUser, password).then(() => {
-            // Update successful.
-        }).catch((error) => {
-            // An error ocurred
-            // ...
-        });
+        //     toast.error('Your email address was not found');
+        //     navigate('/login');
+        // }
     }
 
     return (
