@@ -33,7 +33,7 @@ export function AuthProvider({ children }) {
     const value = {
         currentUser,
         error: isError,
-        isLoading: isLoading,
+        loading: isLoading,
         signIn,
         logIn,
         logOut,
@@ -123,7 +123,7 @@ export function AuthProvider({ children }) {
             const user = userCredentials.user;
 
             if (!user) throw new Error('Something went wrong on the server side');
-            console.log(name);
+
             await setDoc(doc(db, 'users', user.uid), {
                 email: email,
                 name: name,
@@ -164,6 +164,7 @@ export function AuthProvider({ children }) {
     async function logOut() {
         signOut(auth).then(() => {
             setCurrentUser(null);
+            setIsLoading(false);
             return navigate('/signin');
         }).catch(console.error);
     }

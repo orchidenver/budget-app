@@ -1,6 +1,50 @@
-import { Container, Navbar, Nav, NavDropdown, Offcanvas } from 'react-bootstrap';
+import React, { useState } from 'react';
+import { Container, Navbar, Nav, NavDropdown, Offcanvas, Dropdown, Form } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import '../App.css';
+
+const CustomToggle = React.forwardRef(({ children, onClick }, ref) => (
+    <a
+        ref={ref}
+        className='select'
+        onClick={(e) => {
+            e.preventDefault();
+            onClick(e);
+        }}
+    >
+        {children}
+    </a>
+));
+
+const CustomMenu = React.forwardRef(
+    ({ children, style, className, 'aria-labelledby': labeledBy }, ref) => {
+        const [value, setValue] = useState('');
+
+        return (
+            <div
+                ref={ref}
+                style={style}
+                className={className}
+                aria-labelledby={labeledBy}
+            >
+                <Form.Control
+                    autoFocus
+                    className="mx-3 my-2 w-auto"
+                    placeholder="Type to filter..."
+                    onChange={(e) => setValue(e.target.value)}
+                    value={value}
+                />
+                <ul className="list-unstyled">
+                    {React.Children.toArray(children).filter(
+                        (child) =>
+                            !value || child.props.children.toLowerCase().startsWith(value),
+                    )}
+                </ul>
+            </div>
+        );
+    },
+);
 
 export default function NavBar() {
     const navigate = useNavigate();
@@ -24,9 +68,54 @@ export default function NavBar() {
                     <Offcanvas.Body>
                         {currentUser ? (
                             <Nav className="justify-content-end flex-grow-1 pe-5">
+                                <Nav.Item className='p-3'>
+                                    <Dropdown>
+                                        <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components">
+                                            Select year
+                                        </Dropdown.Toggle>
+                                        <Dropdown.Menu as={CustomMenu}>
+                                            <Dropdown.Item eventKey="1">Red</Dropdown.Item>
+                                            <Dropdown.Item eventKey="2">Blue</Dropdown.Item>
+                                            <Dropdown.Item eventKey="3">
+                                                Orange
+                                            </Dropdown.Item>
+                                            <Dropdown.Item eventKey="1">Red-Orange</Dropdown.Item>
+                                        </Dropdown.Menu>
+                                    </Dropdown>
+                                </Nav.Item>
+                                <Nav.Item className='p-3'>
+                                    <Dropdown>
+                                        <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components">
+                                            Select month
+                                        </Dropdown.Toggle>
+                                        <Dropdown.Menu as={CustomMenu}>
+                                            <Dropdown.Item eventKey="1">Red</Dropdown.Item>
+                                            <Dropdown.Item eventKey="2">Blue</Dropdown.Item>
+                                            <Dropdown.Item eventKey="3">
+                                                Orange
+                                            </Dropdown.Item>
+                                            <Dropdown.Item eventKey="1">Red-Orange</Dropdown.Item>
+                                        </Dropdown.Menu>
+                                    </Dropdown>
+                                </Nav.Item>
+                                <Nav.Item className='p-3'>
+                                    <Dropdown>
+                                        <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components">
+                                            Select budget
+                                        </Dropdown.Toggle>
+                                        <Dropdown.Menu as={CustomMenu}>
+                                            <Dropdown.Item eventKey="1">Red</Dropdown.Item>
+                                            <Dropdown.Item eventKey="2">Blue</Dropdown.Item>
+                                            <Dropdown.Item eventKey="3">
+                                                Orange
+                                            </Dropdown.Item>
+                                            <Dropdown.Item eventKey="1">Red-Orange</Dropdown.Item>
+                                        </Dropdown.Menu>
+                                    </Dropdown>
+                                </Nav.Item>
                                 <Nav.Link className='p-3' onClick={() => navigate('/chart')}>Chart</Nav.Link>
                                 <NavDropdown
-                                    title="Dropdown"
+                                    title={currentUser?.displayName}
                                     id={`offcanvasNavbarDropdown-expand-${'md'}`}
                                     className='p-2'
                                 >

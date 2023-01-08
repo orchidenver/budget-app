@@ -10,7 +10,7 @@ import { useAuth } from '../contexts/AuthContext';
 export default function SignIn() {
     const emailRef = useRef();
     const passwordRef = useRef();
-    const { signIn, error, isLoading } = useAuth();
+    const { signIn, loading } = useAuth();
 
     function onSubmitHandler(e) {
         e.preventDefault();
@@ -32,7 +32,7 @@ export default function SignIn() {
                             <Form.Label>Password</Form.Label>
                             <Form.Control type='password' ref={passwordRef} required />
                         </Form.Group>
-                        <Button className='w-100 mt-4' type='submit' disabled={isLoading}>Sign In</Button>
+                        <Button className='w-100 mt-4' type='submit' disabled={loading}>Sign In</Button>
                         <GoogleAuth />
                     </Form>
                     <div className="w-100 text-center mt-3">

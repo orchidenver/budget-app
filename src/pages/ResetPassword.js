@@ -7,7 +7,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 export default function ResetPassword() {
     const emailRef = useRef();
-    const { resetPassword, error, isLoading, currentUser } = useAuth();
+    const { resetPassword, error, loading, currentUser } = useAuth();
 
     function onSubmitHandler(e) {
         e.preventDefault();
@@ -25,7 +25,7 @@ export default function ResetPassword() {
                             <Form.Label>Email</Form.Label>
                             <Form.Control type='email' defaultValue={currentUser?.email} ref={emailRef} required />
                         </Form.Group>
-                        <Button className='w-100 mt-4' type='submit' disabled={isLoading}>Reset</Button>
+                        <Button className='w-100 mt-4' type='submit' disabled={loading}>Reset</Button>
                     </Form>
                 </Card.Body>
             </Card>

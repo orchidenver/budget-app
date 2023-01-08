@@ -1,10 +1,17 @@
 import { createContext, useContext, useState } from "react";
 import { v4 as uuidV4 } from 'uuid';
-import useLocalStorage from "../hooks/useLocalStorage";
+import { useData } from "../hooks/useData";
+import { toast } from 'react-toastify';
+import { useAuth } from "./AuthContext";
+import { db } from '../utils/firebase';
+import { addDoc, collection, doc, deleteDoc, query, where, getDocs } from 'firebase/firestore';
+import { fetchData } from "../utils/fetchData";
 
 const initialContext = {
     budgets: [],
     expenses: [],
+    error: null,
+    loading: false,
     getBudgetExpenses: () => { },
     addExpense: () => { },
     addBudget: () => { },
@@ -21,47 +28,116 @@ export function useBudgets() {
 }
 
 export function BudgetsProvider({ children }) {
-    const [budgets, setBudgets] = useLocalStorage('budgets', []);
-    const [expenses, setExpenses] = useLocalStorage('expenses', []);
+    const { currentUser } = useAuth();
+    const [budgets, setBudgets] = useData('budgets');
+    const [expenses, setExpenses] = useData('expenses');
+    const [isError, setIsError] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
 
     function getBudgetExpenses(budgetId) {
         return expenses.filter(expense => expense.budgetId === budgetId);
     }
 
-    function addExpense({ description, amount, budgetId }) {
-        setExpenses(prevState => {
-            return [...prevState, {
+    async function addExpense({ description, amount, budgetId }) {
+        setIsLoading(true);
+
+        try {
+
+            if (!description || !amount || !budgetId) {
+                setIsError(true);
+                setIsLoading(false);
+                return toast.error('Fill all the required fields');
+            }
+
+            await addDoc(collection(db, 'expenses'), {
                 id: uuidV4(),
-                description,
                 amount,
-                budgetId
-            }];
-        });
+                description,
+                budgetId,
+                date: new Date(),
+                userId: currentUser?.uid
+            });
+
+            setIsError(null);
+            setIsLoading(false);
+
+            fetchData('expenses', setExpenses);
+
+        } catch (error) {
+            setIsError(true);
+            setIsLoading(false);
+            toast.error('Fill all the required fields');
+        }
     }
 
-    function addBudget({ name, max }) {
-        setBudgets(prevState => {
-            if (prevState.find(budget => budget.name === name)) return prevState;
+    async function addBudget({ name, max }) {
+        setIsLoading(true);
 
-            return [...prevState, {
+        try {
+
+            if (!name || !max) {
+                setIsError(true);
+                setIsLoading(false);
+                return toast.error('Fill all the required fields');
+            }
+
+            await addDoc(collection(db, 'budgets'), {
                 id: uuidV4(),
+                max,
                 name,
-                max
-            }];
-        });
+                userId: currentUser?.uid
+            });
+
+            setIsError(null);
+            setIsLoading(false);
+
+            fetchData('budgets', setBudgets);
+
+        } catch (error) {
+            setIsError(true);
+            setIsLoading(false);
+            toast.error('Fill all the required fields');
+        }
     }
 
-    function deleteBudget({ id }) {
-        setBudgets(prevState => prevState.filter(item => item.id !== id));
+    async function deleteBudget({ id }) {
+        try {
+            const budgetToDeleteQuery = query(collection(db, 'budgets'), where('id', '==', id), where('userId', '==', currentUser?.uid));
+            const budgetToDeleteData = await getDocs(budgetToDeleteQuery);
+            const budgetToDelete = doc(db, 'budgets', budgetToDeleteData.docs[0].id);
+            await deleteDoc(budgetToDelete);
+            fetchData('budgets', setBudgets);
+        } catch (error) {
+            alert(error);
+        }
     }
 
-    function deleteExpense({ id }) {
-        setExpenses(prevState => prevState.filter(item => item.id !== id));
+    async function deleteExpense({ id }) {
+        try {
+            const expenseToDeleteQuery = query(collection(db, 'expenses'), where('id', '==', id), where('userId', '==', currentUser?.uid));
+            const expenseToDeleteData = await getDocs(expenseToDeleteQuery);
+            const expenseToDelete = doc(db, 'expenses', expenseToDeleteData.docs[0].id);
+            await deleteDoc(expenseToDelete);
+            fetchData('expenses', setExpenses);
+        } catch (error) {
+            alert(error);
+        }
+        try {
+            const res = await deleteDoc(doc(db, 'expenses', id));
+            console.log(res);
+        } catch (error) {
+            // BUG
+            // FirebaseError: Missing or insufficient permissions. POPS UP
+            console.log(error);
+        }
+        // setExpenses(prevState => prevState.filter(item => item.id !== id));
     }
 
     const values = {
         budgets,
         expenses,
+        error: isError,
+        loading: isLoading,
         getBudgetExpenses,
         addExpense,
         addBudget,

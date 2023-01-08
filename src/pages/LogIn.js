@@ -11,17 +11,17 @@ export default function LogIn() {
     const emailRef = useRef();
     const passwordRef = useRef();
     const nameRef = useRef();
-    const { logIn, error, isLoading } = useAuth();
+    const { logIn, error, loading } = useAuth();
 
     function onSubmitHandler(e) {
         e.preventDefault();
 
         logIn(emailRef.current.value, passwordRef.current.value, nameRef.current.value);
-        // setIsLoading(true);
+        // setloading(true);
         // try {
         //     if (!nameRef.current.value) {
         //         setError(true);
-        //         setIsLoading(false);
+        //         setloading(false);
         //         return toast.error('Please fill all the required fields');
         //     }
 
@@ -38,11 +38,11 @@ export default function LogIn() {
         //     });
 
         //     setError('');
-        //     setIsLoading(false);
+        //     setloading(false);
         //     navigate('/');
         // } catch (error) {
         //     setError(true);
-        //     setIsLoading(false);
+        //     setloading(false);
         //     toast.error('Please fill all the required fields');
         // }
     }
@@ -65,7 +65,7 @@ export default function LogIn() {
                             <Form.Label>Password</Form.Label>
                             <Form.Control type='password' ref={passwordRef} required />
                         </Form.Group>
-                        <Button className='w-100 mt-4' type='submit' disabled={isLoading}>Log In</Button>
+                        <Button className='w-100 mt-4' type='submit' disabled={loading}>Log In</Button>
                         <GoogleAuth />
                     </Form>
                     <div className="w-100 text-center mt-3">
