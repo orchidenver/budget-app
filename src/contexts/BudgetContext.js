@@ -17,7 +17,6 @@ const initialContext = {
     addBudget: () => { },
     deleteBudget: () => { },
     deleteExpense: () => { },
-    calcDate: () => { }
 }
 
 const BudgetsContext = createContext(initialContext);
@@ -37,20 +36,6 @@ export function BudgetsProvider({ children }) {
 
     function getBudgetExpenses(budgetId) {
         return expenses.filter(expense => expense.budgetId === budgetId);
-    }
-
-    function calcDate(data) {
-        const monthsArray = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-
-        return data.map(expense => {
-            const month = new Date(expense.date.seconds * 1000).getUTCMonth();
-            const year = new Date(expense.date.seconds * 1000).getFullYear();
-
-            return {
-                year,
-                month: monthsArray[month]
-            }
-        });
     }
 
     async function addExpense({ description, amount, budgetId }) {
@@ -100,6 +85,7 @@ export function BudgetsProvider({ children }) {
                 id: uuidV4(),
                 max,
                 name,
+                date: new Date(),
                 userId: currentUser?.uid
             });
 
@@ -158,7 +144,6 @@ export function BudgetsProvider({ children }) {
         addBudget,
         deleteBudget,
         deleteExpense,
-        calcDate
     }
 
     return (

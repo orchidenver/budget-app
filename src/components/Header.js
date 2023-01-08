@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { Container, Navbar, Nav, NavDropdown, Offcanvas, Dropdown, Form } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useBudgets } from '../contexts/BudgetContext';
+import { getMonthsAndYearsFromExpenses } from '../utils/getMonthsAndYearsFromExpenses';
+import { getBudgets } from '../utils/getBudgets';
 import '../App.css';
 
 const CustomToggle = React.forwardRef(({ children, onClick }, ref) => (
@@ -49,6 +52,7 @@ const CustomMenu = React.forwardRef(
 export default function NavBar() {
     const navigate = useNavigate();
     const { currentUser, logOut } = useAuth();
+    const { expenses, budgets } = useBudgets();
 
     return (
         <Navbar key={'md'} bg="primary" expand={'md'} className="mb-3" variant="dark">
@@ -74,12 +78,9 @@ export default function NavBar() {
                                             Select year
                                         </Dropdown.Toggle>
                                         <Dropdown.Menu as={CustomMenu}>
-                                            <Dropdown.Item eventKey="1">Red</Dropdown.Item>
-                                            <Dropdown.Item eventKey="2">Blue</Dropdown.Item>
-                                            <Dropdown.Item eventKey="3">
-                                                Orange
-                                            </Dropdown.Item>
-                                            <Dropdown.Item eventKey="1">Red-Orange</Dropdown.Item>
+                                            {
+                                                getMonthsAndYearsFromExpenses(expenses, 'year').map(year => <Dropdown.Item key={year} eventKey="1">{year}</Dropdown.Item>)
+                                            }
                                         </Dropdown.Menu>
                                     </Dropdown>
                                 </Nav.Item>
@@ -89,12 +90,9 @@ export default function NavBar() {
                                             Select month
                                         </Dropdown.Toggle>
                                         <Dropdown.Menu as={CustomMenu}>
-                                            <Dropdown.Item eventKey="1">Red</Dropdown.Item>
-                                            <Dropdown.Item eventKey="2">Blue</Dropdown.Item>
-                                            <Dropdown.Item eventKey="3">
-                                                Orange
-                                            </Dropdown.Item>
-                                            <Dropdown.Item eventKey="1">Red-Orange</Dropdown.Item>
+                                            {
+                                                getMonthsAndYearsFromExpenses(expenses, 'month').map(month => <Dropdown.Item key={month} eventKey="1">{month}</Dropdown.Item>)
+                                            }
                                         </Dropdown.Menu>
                                     </Dropdown>
                                 </Nav.Item>
@@ -104,12 +102,9 @@ export default function NavBar() {
                                             Select budget
                                         </Dropdown.Toggle>
                                         <Dropdown.Menu as={CustomMenu}>
-                                            <Dropdown.Item eventKey="1">Red</Dropdown.Item>
-                                            <Dropdown.Item eventKey="2">Blue</Dropdown.Item>
-                                            <Dropdown.Item eventKey="3">
-                                                Orange
-                                            </Dropdown.Item>
-                                            <Dropdown.Item eventKey="1">Red-Orange</Dropdown.Item>
+                                            {
+                                                getBudgets(budgets).map(budget => <Dropdown.Item key={budget} eventKey="1">{budget}</Dropdown.Item>)
+                                            }
                                         </Dropdown.Menu>
                                     </Dropdown>
                                 </Nav.Item>
